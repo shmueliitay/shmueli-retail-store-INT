@@ -1,0 +1,79 @@
+replicaCount: 1
+
+image:
+  repository: "922581758696.dkr.ecr.eu-central-1.amazonaws.com/retail-store-catalog"
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30081
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+env:
+  - name: POSTGRES_HOST
+    value: "retail-postgresql"
+  - name: POSTGRES_DB
+    value: "retaildb"
+  - name: POSTGRES_USER
+    value: "retailuser"
+  - name: POSTGRES_PASSWORD
+    value: "retailpass"
+
+healthCheck:
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+serviceAccount:
+  create: true
+  name: ""
+
+securityGroups:
+  create: false
+  name: ""
+
+app:
+  persistence:
+    secret:
+      create: false
+      name: ""
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+mysql:
+  create: false
+
+autoscaling:
+  enabled: false
+
+hpa:
+  enabled: false
+
+metrics:
+  enabled: false
+
+configMap:
+  create: false
+
+imagePullSecrets:
+  - name: ecr-registry
+

@@ -1,0 +1,124 @@
+replicaCount: 1
+
+image:
+  repository: "922581758696.dkr.ecr.eu-central-1.amazonaws.com/retail-store-orders"
+  tag: latest
+  pullPolicy: IfNotPresent
+imagePullSecrets:
+    - name: ecr-secret
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30083
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+    ephemeral-storage: 500Mi
+
+app:
+  persistence:
+    endpoint: "retail-postgresql:5432"
+    secret:
+      create: true
+      name: orders-db-secret
+      username: "postgres"
+      password: "sUvPpSrWoE"
+  messaging:
+    rabbitmq:
+      host: "retail-rabbitmq:5672"
+      port: 5672
+      secret:
+        create: true
+        name: orders-rabbitmq-secret
+        username: "guest"
+        password: "guest"
+
+serviceAccount:
+  create: true
+  name: ""
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+securityGroups:
+  create: false
+
+rabbitmq:
+  create: false
+  image:
+    repository: "bitnami/rabbitmq"
+    tag: "3.12.21-debian-12-r0"
+
+postgresql:
+  create: false
+  image:
+    repository: "bitnami/postgresql"
+    tag: "16.2.0-debian-12-r0"
+  persistence:
+    enabled: false
+    storageClass: "local-path"
+    size: 8Gi
+
+healthCheck:
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+global:
+  security:
+    allowInsecureImages: true
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: 8080
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 10
+
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "prod"
+  # PostgreSQL
+  - name: SPRING_DATASOURCE_URL
+    value: "jdbc:postgresql://retail-postgresql:5432/retaildb"
+  - name: SPRING_DATASOURCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: RETAIL_ORDERS_PERSISTENCE_USERNAME
+  - name: SPRING_DATASOURCE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: RETAIL_ORDERS_PERSISTENCE_PASSWORD
+  # RabbitMQ
+  - name: SPRING_RABBITMQ_HOST
+    value: "retail-rabbitmq.retail-store.svc.cluster.local"
+  - name: SPRING_RABBITMQ_PORT
+    value: "5672"
+  - name: SPRING_RABBITMQ_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-rabbitmq-secret
+        key: SPRING_RABBITMQ_USERNAME
+  - name: SPRING_RABBITMQ_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: orders-rabbitmq-secret
+        key: SPRING_RABBITMQ_PASSWORD
+

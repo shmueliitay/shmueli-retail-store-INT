@@ -1,0 +1,96 @@
+replicaCount: 1
+
+image:
+  repository: "922581758696.dkr.ecr.eu-central-1.amazonaws.com/retail-store-ui"
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30087
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+env: []
+
+healthCheck:
+  path: /actuator/health
+  initialDelaySeconds: 40
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+serviceAccount:
+  create: true
+  name: ""
+
+securityGroups:
+  create: false
+  name: ""
+
+app:
+  persistence:
+    secret:
+      create: false
+      name: ""
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+mysql:
+  create: false
+
+autoscaling:
+  enabled: false
+
+hpa:
+  enabled: false
+
+metrics:
+  enabled: false
+
+configMap:
+  create: false
+
+certManager:
+  createClusterIssuer: false
+
+istio:
+  enabled: false
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: store-ui.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+imagePullSecrets:
+  - name: ecr-registry
+
+
+nameOverride: store-ui
+
+persistence:
+  enabled: false
+  mountPath: /data
+  size: 1Gi
+  storageClassName: local-path
+

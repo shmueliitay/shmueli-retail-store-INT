@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: retail-store-cart-ingress
+  namespace: retail-store
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /carts/123
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: retail-store.local
+      http:
+        paths:
+          - path: /cart
+            pathType: Prefix
+            backend:
+              service:
+                name: store-cart-retail-store-cart
+                port:
+                  number: 8080
+

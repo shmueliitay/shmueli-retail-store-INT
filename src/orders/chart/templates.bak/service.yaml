@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "retail-store-orders.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "retail-store-orders.name" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  selector:
+    app.kubernetes.io/name: {{ include "retail-store-orders.name" . }}
+

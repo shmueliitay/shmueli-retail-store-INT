@@ -1,0 +1,6 @@
+apiVersion: v2
+name: retail-store-catalog
+description: Helm chart for the retail-store catalog microservice
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
