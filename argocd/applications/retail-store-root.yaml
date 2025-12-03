@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: retail-store-root
+  namespace: argocd
+spec:
+  project: retail-store-project
+  source:
+    repoURL: 'https://github.com/shmueliitay/retail-store-sample-app.git'
+    targetRevision: HEAD
+    path: argocd/applications
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: retail-store
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+

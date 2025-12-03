@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: retail-store-project
+  namespace: argocd
+spec:
+  description: Project for retail store microservices
+  destinations:
+    - namespace: '*'
+      server: '*'
+  sourceRepos:
+    - 'https://github.com/shmueliitay/retail-store-sample-app.git'
