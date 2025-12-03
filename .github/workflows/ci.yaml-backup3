@@ -1,0 +1,61 @@
+name: Build & Push Changed Microservices to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-and-build:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-central-1
+      AWS_ACCOUNT_ID: 922581758696
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Detect changed microservices
+        id: changes
+        run: |
+          echo "Detecting changed services..."
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '^src/(cart|catalog|checkout|orders|ui)/' | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          echo "changed_services=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Changed microservices: $CHANGED"
+
+      - name: Build and push Docker images
+        if: steps.changes.outputs.changed_services != ''
+        run: |
+          for service in ${{ steps.changes.outputs.changed_services }}; do
+            REPO="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/retail-store-$service"
+            SHORT_SHA=${GITHUB_SHA::8}
+            echo "--- Processing $service ---"
+
+            docker build -t $REPO:$SHORT_SHA ./src/$service
+            docker build -t $REPO:latest ./src/$service
+
+            docker tag $REPO:$SHORT_SHA $REPO:latest
+            echo "Local image tags for the built image:"
+            docker images --filter reference="$REPO"
+            
+            
+            echo "Pushing SHA tag: $REPO:$SHORT_SHA"
+            docker push $REPO:$SHORT_SHA
+      
+      
+            echo "Pushing latest tag: $REPO:latest"
+            docker push $REPO:latest
+          done
