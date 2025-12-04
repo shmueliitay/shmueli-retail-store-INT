@@ -7,9 +7,18 @@ resource "aws_instance" "control_plane" {
   vpc_security_group_ids = [aws_security_group.k8s.id]
   associate_public_ip_address = true
 
-  user_data = file("../scripts/install_kubeadm.sh")
+#  user_data = file("../scripts/install_kubeadm.sh")
+
+# User data to bootstrap control-plane
+  user_data = templatefile("${path.module}/../scripts/kubernetes_cluster_bootstrap.tpl", {
+    node_role        = "control-plane"
+    control_plane_ip = ""
+    bootstrap_script = file("${path.module}/../scripts/kubernetes_cluster_bootstrap.sh")
+  })
+
 
   tags = merge(local.common_tags, { Name = "${local.resource_prefix}-control-plane" })
+
 }
 
 # Worker Nodes
@@ -22,7 +31,14 @@ resource "aws_instance" "workers" {
   vpc_security_group_ids = [aws_security_group.k8s.id]
   associate_public_ip_address = true
 
-  user_data = file("../scripts/install_kubeadm.sh")
+#  user_data = file("../scripts/install_kubeadm.sh")
+
+# User data to bootstrap workers
+  user_data = templatefile("${path.module}/../scripts/kubernetes_cluster_bootstrap.tpl", {
+    node_role        = "worker"
+    control_plane_ip = aws_instance.control_plane.private_ip
+    bootstrap_script = file("${path.module}/../scripts/kubernetes_cluster_bootstrap.sh")
+  })
 
   tags = merge(local.common_tags, { Name = "${local.resource_prefix}-worker-${count.index + 1}" })
 }
