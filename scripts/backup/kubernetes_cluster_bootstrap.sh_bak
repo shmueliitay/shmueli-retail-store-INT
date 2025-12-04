@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+# Determine if we are root; if not, use sudo
+SUDO=""
+if [ "$(id -u)" -ne 0 ]; then
+  SUDO="sudo"
+fi
+
+# ----------------------------
+# Install Docker & Kubernetes
+# ----------------------------
+$SUDO apt-get update
+$SUDO apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+curl -fsSL https://get.docker.com | $SUDO sh
+$SUDO usermod -aG docker ubuntu
+$SUDO systemctl enable docker
+$SUDO systemctl start docker
+
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | $SUDO apt-key add -
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | $SUDO tee /etc/apt/sources.list.d/kubernetes.list
+$SUDO apt-get update
+$SUDO apt-get install -y kubelet kubeadm kubectl
+$SUDO apt-mark hold kubelet kubeadm kubectl
+
+$SUDO swapoff -a
+$SUDO sed -i '/ swap / s/^/#/' /etc/fstab
+
+# ----------------------------
+# Determine node type
+# ----------------------------
+NODE_ROLE="$1"   # pass "control-plane" or "worker" as argument
+CONTROL_PLANE_IP="$2"  # IP of control-plane node
+
+if [ "$NODE_ROLE" == "control-plane" ]; then
+  # Initialize cluster
+  sudo kubeadm init --pod-network-cidr=10.244.0.0/16 > /tmp/kubeadm_init.log
+
+  # Save join command to a file
+  JOIN_CMD=$(grep "kubeadm join" /tmp/kubeadm_init.log | tail -1)
+  echo "$JOIN_CMD" > /tmp/join_command.sh
+elif [ "$NODE_ROLE" == "worker" ]; then
+  # Wait for join command from control-plane
+  while [ ! -f /tmp/join_command.sh ]; do
+    echo "Waiting for join command from control-plane..."
+    sleep 5
+  done
+  sudo bash /tmp/join_command.sh
+fi
+
+echo "Kubernetes setup complete for $NODE_ROLE!"
+

@@ -8,14 +8,17 @@ resource "aws_ecr_repository" "retail_store_repos" {
     "retail-store-checkout"
   ])
 
-  name = each.value
+ # name = each.value
+name = "${local.resource_prefix}-${each.value}"
 
   image_scanning_configuration {
     scan_on_push = true
   }
 
-  tags = {
-    Environment = "dev"
-    Project     = "retail-store"
-  }
+tags = merge(local.common_tags, { Name = "${local.resource_prefix}-${each.value}" })
+
+#  tags = {
+#    Environment = "dev"
+#    Project     = "retail-store"
+#  }
 }
