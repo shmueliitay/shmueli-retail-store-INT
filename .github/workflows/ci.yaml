@@ -42,7 +42,7 @@ jobs:
           CHANGED_SERVICES="${{ steps.changes.outputs.changed_services }}"
           echo "Changed services: $CHANGED_SERVICES"
           for service in $CHANGED_SERVICES; do
-            REPO="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/retail-store-$service"
+            REPO="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/shmueli-retail-store-$service"
             SHORT_SHA=${GITHUB_SHA::8}
 
             echo "--- Processing Service: $service ---"
