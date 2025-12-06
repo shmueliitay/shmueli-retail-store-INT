@@ -6,7 +6,7 @@ metadata:
 spec:
   project: retail-store-project
   source:
-    repoURL: 'https://github.com/shmueliitay/retail-store-sample-app.git'
+    repoURL: 'https://github.com/shmueliitay/shmueli-retail-store-INT.git'
     targetRevision: main
     path: src/orders/chart
   destination:
