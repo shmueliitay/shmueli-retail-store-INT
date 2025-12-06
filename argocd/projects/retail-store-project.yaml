@@ -9,4 +9,4 @@ spec:
     - namespace: '*'
       server: '*'
   sourceRepos:
-    - 'https://github.com/shmueliitay/retail-store-sample-app.git'
+    - 'https://github.com/shmueliitay/shmueli-retail-store-INT.git'
